@@ -115,6 +115,7 @@ const Config = function () {
   this.channel = 'development'
   this.git_cache_path = getNPMConfig(['git_cache_path'])
   this.sccache = getNPMConfig(['sccache'])
+  this.gomaServerHost = getNPMConfig(['goma_server_host'])
   this.braveStatsApiKey = getNPMConfig(['brave_stats_api_key']) || ''
   this.braveStatsUpdaterUrl = getNPMConfig(['brave_stats_updater_url']) || ''
   this.ignore_compile_failure = false
@@ -168,6 +169,13 @@ Config.prototype.isAsan = function () {
   return false
 }
 
+Config.prototype.useGoma = function () {
+  if (this.use_goma) {
+    return true
+  }
+  return false
+}
+
 Config.prototype.buildArgs = function () {
   const version = this.braveVersion
   let version_parts = version.split('+')[0]
@@ -176,6 +184,7 @@ Config.prototype.buildArgs = function () {
   const chrome_version_parts = this.chromeVersion.split('.')
 
   let args = {
+    use_goma: this.useGoma(),
     is_asan: this.isAsan(),
     enable_full_stack_frames_for_profiling: this.isAsan(),
     v8_enable_verify_heap: this.isAsan(),
@@ -466,6 +475,14 @@ Config.prototype.getProjectRef = function (projectName) {
   return 'origin/master'
 }
 
+Config.prototype.getCachePath = function () {
+  return this.git_cache_path || process.env.GIT_CACHE_PATH
+}
+
+Config.prototype.getGomaServerHost = function () {
+  return this.gomaServerHost || process.env.GOMA_SERVER_HOST
+}
+
 Config.prototype.update = function (options) {
   if (options.universal) {
     this.targetArch = 'arm64'
@@ -500,6 +517,12 @@ Config.prototype.update = function (options) {
     this.is_asan = true
   } else {
     this.is_asan = false
+  }
+
+  if (options.use_goma) {
+    this.use_goma = true
+  } else {
+    this.use_goma = false
   }
 
   if (options.C) {
@@ -633,10 +656,6 @@ Config.prototype.update = function (options) {
   }
 }
 
-Config.prototype.getCachePath = function () {
-  return this.git_cache_path || process.env.GIT_CACHE_PATH
-}
-
 Object.defineProperty(Config.prototype, 'defaultOptions', {
   get: function () {
     let env = Object.assign({}, process.env)
@@ -672,6 +691,12 @@ Object.defineProperty(Config.prototype, 'defaultOptions', {
       } else {
         console.log('using sccache')
       }
+    }
+
+    if (this.useGoma()) {
+      env.CC_WRAPPER = path.join(this.depotToolsDir, '.cipd_bin', 'gomacc');
+      env.GOMA_SERVER_HOST = this.getGomaServerHost()
+      console.log('using goma')
     }
 
     if (process.platform === 'linux') {
