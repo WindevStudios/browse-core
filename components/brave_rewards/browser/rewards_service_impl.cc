@@ -405,6 +405,11 @@ void RewardsServiceImpl::CheckPreferences() {
 
   if (is_ac_enabled || is_ads_enabled) {
     StartLedgerProcessIfNecessary();
+
+    // If Ads or AC are enabled then the user must have previously opted-in to
+    // Rewards. Update the enabled flag to reflect the previous opt-in.
+    if (!profile_->GetPrefs()->GetBoolean(prefs::kEnabled))
+      profile_->GetPrefs()->SetBoolean(prefs::kEnabled, true);
   }
 }
 
@@ -1642,34 +1647,43 @@ void RewardsServiceImpl::SetAutoContributeEnabled(bool enabled) {
 }
 
 bool RewardsServiceImpl::ShouldShowOnboarding() const {
-  const bool legacy_enabled = profile_->GetPrefs()->GetBoolean(prefs::kEnabled);
+  bool ads_supported = false;
+  if (auto* ads = brave_ads::AdsServiceFactory::GetForProfile(profile_))
+    ads_supported = ads->IsSupportedLocale();
 
-  bool ads_enabled = false;
-  bool ads_supported = true;
-  auto* ads_service = brave_ads::AdsServiceFactory::GetForProfile(profile_);
-  if (ads_service) {
-    ads_enabled = ads_service->IsEnabled();
-    ads_supported = ads_service->IsSupportedLocale();
-  }
-
-  return !legacy_enabled && !ads_enabled && ads_supported;
+  return ads_supported && !IsRewardsEnabled();
 }
 
-void RewardsServiceImpl::SaveOnboardingResult(OnboardingResult result) {
-  PrefService* prefs = profile_->GetPrefs();
-  prefs->SetTime(prefs::kOnboarded, base::Time::Now());
-
-  if (result != OnboardingResult::kOptedIn) {
-    return;
-  }
-
-  StartProcess(base::BindOnce(&RewardsServiceImpl::OnStartProcessForOnboarding,
-                              AsWeakPtr()));
+void RewardsServiceImpl::EnableRewards() {
+  StartProcess(base::BindOnce(
+      &RewardsServiceImpl::OnStartProcessForEnableRewards, AsWeakPtr()));
 }
 
-void RewardsServiceImpl::OnStartProcessForOnboarding() {
-  SetAutoContributeEnabled(true);
+void RewardsServiceImpl::OnStartProcessForEnableRewards() {
+  auto* prefs = profile_->GetPrefs();
+  if (!prefs->GetBoolean(prefs::kEnabled)) {
+    // Store the user's opt-in in prefs. The enabled pref was discontinued after
+    // 1.18 when the Rewards toggle was removed from the UI. However, this
+    // created problems in scenarios where we need to know whether the user
+    // has previously consented to background Rewards functionality.
+    prefs->SetBoolean(prefs::kEnabled, true);
+
+    // If Rewards are not currently enabled, fetch the user's balance before
+    // turning on AC.
+    FetchBalance(base::BindOnce(
+        &RewardsServiceImpl::OnFetchBalanceForEnableRewards, AsWeakPtr()));
+  }
+
   SetAdsEnabled(true);
+}
+
+void RewardsServiceImpl::OnFetchBalanceForEnableRewards(
+    ledger::type::Result result,
+    ledger::type::BalancePtr balance) {
+  // Do not enable AC on Rewards opt-in if the user has a non-zero balance, as
+  // this could result in unintentional BAT transfers.
+  if (balance && balance->total == 0)
+    SetAutoContributeEnabled(true);
 }
 
 void RewardsServiceImpl::OnAdsEnabled(bool ads_enabled) {
@@ -3491,17 +3505,7 @@ void RewardsServiceImpl::SetAdsEnabled(const bool is_enabled) {
 }
 
 bool RewardsServiceImpl::IsRewardsEnabled() const {
-  if (profile_->GetPrefs()->GetBoolean(prefs::kEnabled))
-    return true;
-
-  if (profile_->GetPrefs()->GetBoolean(prefs::kAutoContributeEnabled))
-    return true;
-
-  auto* ads_service = brave_ads::AdsServiceFactory::GetForProfile(profile_);
-  if (ads_service && ads_service->IsEnabled())
-    return true;
-
-  return false;
+  return profile_->GetPrefs()->GetBoolean(prefs::kEnabled);
 }
 
 void RewardsServiceImpl::OnStartProcessForSetAdsEnabled() {
