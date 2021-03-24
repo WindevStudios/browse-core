@@ -104,7 +104,7 @@ TEST_F(BATLedgerContextTest, StartJob) {
   class Job : public BATLedgerContext::Object {
    public:
     AsyncResult<int> result() const { return resolver_.result(); }
-    void Start(int n) { resolver_.Complete(std::move(n)); }
+    void Start(int n) { resolver_.Complete(n); }
 
    private:
     AsyncResult<int>::Resolver resolver_;

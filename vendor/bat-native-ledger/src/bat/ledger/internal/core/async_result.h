@@ -54,7 +54,7 @@ class AsyncResult {
   class Resolver {
    public:
     Resolver() {}
-    void Complete(T&& value) { result_.Complete(std::move(value)); }
+    void Complete(T value) { result_.Complete(std::move(value)); }
     AsyncResult result() const { return result_; }
 
    private:
@@ -80,7 +80,7 @@ class AsyncResult {
     std::list<Listener> listeners;
   };
 
-  void Complete(T&& value) {
+  void Complete(T value) {
     task_runner_->PostTask(
         FROM_HERE, base::BindOnce(SetCompleteInTask, store_, std::move(value)));
   }

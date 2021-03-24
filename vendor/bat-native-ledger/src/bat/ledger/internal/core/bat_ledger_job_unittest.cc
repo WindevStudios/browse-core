@@ -18,12 +18,12 @@ TEST_F(BATLedgerJobTest, StartJob) {
    public:
     void Start(int n) {
       AsyncResult<int>::Resolver r;
-      r.result().Then(base::BindOnce(&Job::OnDone, base::AsWeakPtr(this)));
-      r.Complete(std::move(n));
+      r.result().Then(Continuation(this, &Job::OnDone));
+      r.Complete(n);
     }
 
    private:
-    void OnDone(const int& n) { resolver().Complete(static_cast<bool>(n)); }
+    void OnDone(const int& n) { Complete(static_cast<bool>(n)); }
   };
 
   bool value = false;

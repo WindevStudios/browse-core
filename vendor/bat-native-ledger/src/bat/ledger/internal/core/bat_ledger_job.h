@@ -22,7 +22,7 @@ namespace ledger {
 //   class MyJob : public BATLedgerJob<int> {
 //    public:
 //     void Start() {
-//       resolver().Complete(42);
+//       Complete(42);
 //     }
 //   };
 template <typename T>
@@ -35,8 +35,16 @@ class BATLedgerJob : public BATLedgerContext::Object,
   Result result() const { return resolver_.result(); }
 
  protected:
-  // Returns the resolver for the async result associated with the job.
-  typename Result::Resolver& resolver() { return resolver_; }
+  // Completes the job with the specified value
+  void Complete(T value) { resolver_.Complete(std::move(value)); }
+
+  // Returns a base::OnceCallback that wraps the specified member function. The
+  // resulting callback is bound with a WeakPtr for the receiver. It is not
+  // bound with any additional arguments.
+  template <typename Derived, typename Functor>
+  static auto Continuation(Derived* this_ptr, Functor fn) {
+    return base::BindOnce(fn, base::AsWeakPtr(this_ptr));
+  }
 
  private:
   typename Result::Resolver resolver_;
