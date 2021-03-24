@@ -31,7 +31,7 @@ void PermissionContextBase::PermissionDecided(
       const PermissionRequest* permission_request = request_it->second.get();
       DCHECK(permission_request);
       permission_lifetime_manager_->PermissionDecided(
-          *permission_request, requesting_origin, embedding_origin,
+          id, *permission_request, requesting_origin, embedding_origin,
           content_setting, is_one_time);
     }
   }

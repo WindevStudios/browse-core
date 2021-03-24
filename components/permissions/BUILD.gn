@@ -11,6 +11,7 @@ source_set("permissions") {
     "permission_lifetime_pref_names.h",
     "permission_lifetime_utils.cc",
     "permission_lifetime_utils.h",
+    "permission_origin_lifetime_monitor.h",
     "permission_origins.cc",
     "permission_origins.h",
   ]

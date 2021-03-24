@@ -8,6 +8,7 @@
 
 #include <string>
 #include <utility>
+#include <vector>
 
 #include "content/public/browser/browser_context.h"
 #include "content/public/browser/session_storage_namespace.h"
@@ -32,6 +33,10 @@ class EphemeralStorageTabHelper
  public:
   explicit EphemeralStorageTabHelper(content::WebContents* web_contents);
   ~EphemeralStorageTabHelper() override;
+
+  const std::string& GetStorageDomain() const;
+  void RegisterOnStorageDomainDestroyedCallback(
+      base::OnceCallback<void(const std::string&)> callback);
 
  protected:
   void ReadyToCommitNavigation(

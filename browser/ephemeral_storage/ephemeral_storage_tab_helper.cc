@@ -63,6 +63,19 @@ EphemeralStorageTabHelper::EphemeralStorageTabHelper(WebContents* web_contents)
 
 EphemeralStorageTabHelper::~EphemeralStorageTabHelper() {}
 
+const std::string& EphemeralStorageTabHelper::GetStorageDomain() const {
+  if (!tld_ephemeral_lifetime_) {
+    return base::EmptyString();
+  }
+  return tld_ephemeral_lifetime_->GetStorageDomain();
+}
+
+void EphemeralStorageTabHelper::RegisterOnStorageDomainDestroyedCallback(
+    base::OnceCallback<void(const std::string&)> callback) {
+  DCHECK(tld_ephemeral_lifetime_);
+  tld_ephemeral_lifetime_->RegisterOnDestroyCallback(std::move(callback));
+}
+
 void EphemeralStorageTabHelper::ReadyToCommitNavigation(
     NavigationHandle* navigation_handle) {
   if (!navigation_handle->IsInMainFrame())
@@ -77,7 +90,7 @@ void EphemeralStorageTabHelper::ReadyToCommitNavigation(
   if (new_domain == previous_domain)
     return;
 
-  CreateEphemeralStorageAreasForDomainAndURL(new_domain, new_url);
+  CreateEphemeralStorageAreasForDomainAndURL(std::move(new_domain), new_url);
 }
 
 void EphemeralStorageTabHelper::CreateEphemeralStorageAreasForDomainAndURL(
@@ -125,7 +138,7 @@ void EphemeralStorageTabHelper::CreateEphemeralStorageAreasForDomainAndURL(
           : base::nullopt);
 
   tld_ephemeral_lifetime_ = content::TLDEphemeralLifetime::GetOrCreate(
-      browser_context, partition, new_domain);
+      browser_context, partition, std::move(new_domain));
 }
 
 WEB_CONTENTS_USER_DATA_KEY_IMPL(EphemeralStorageTabHelper)
