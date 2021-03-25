@@ -6,20 +6,15 @@
 #ifndef BRAVE_UI_BRAVE_ADS_NOTIFICATION_VIEW_FACTORY_H_
 #define BRAVE_UI_BRAVE_ADS_NOTIFICATION_VIEW_FACTORY_H_
 
-#include <memory>
-#include <string>
-
-#include "base/callback_forward.h"
-
 namespace brave_ads {
 
-class NotificationView;
 class Notification;
+class NotificationView;
 
-// Creates appropriate NotificationViews for notifications depending on the
+// Creates appropriate notification NotificationView's depending on the
 // notification type. A notification is top level if it needs to be rendered
 // outside the browser window. No custom shadows are created for top level
-// notifications on Linux with Aura.
+// notifications on Linux with Aura
 class NotificationViewFactory {
  public:
   static NotificationView* Create(const Notification& notification);

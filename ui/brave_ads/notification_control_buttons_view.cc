@@ -7,103 +7,95 @@
 
 #include <memory>
 
+#include "base/bind.h"
 #include "brave/app/vector_icons/vector_icons.h"
-#include "brave/grit/brave_theme_resources.h"
 #include "brave/ui/brave_ads/notification_view.h"
-#include "brave/ui/brave_ads/padded_button.h"
-#include "brave/ui/brave_ads/padded_image.h"
-#include "brave/ui/brave_ads/public/cpp/constants.h"
-#include "ui/base/l10n/l10n_util.h"
-#include "ui/base/resource/resource_bundle.h"
+#include "brave/ui/brave_ads/padded_image_button.h"
+#include "brave/ui/brave_ads/padded_image_view.h"
 #include "ui/compositor/layer.h"
-#include "ui/events/event.h"
 #include "ui/gfx/color_palette.h"
 #include "ui/gfx/paint_vector_icon.h"
-#include "ui/strings/grit/ui_strings.h"
 #include "ui/views/background.h"
-#include "ui/views/controls/button/image_button.h"
-#include "ui/views/controls/image_view.h"
 #include "ui/views/layout/box_layout.h"
+#include "ui/views/metadata/metadata_impl_macros.h"
 
 namespace brave_ads {
 
-const char NotificationControlButtonsView::kViewClassName[] =
-    "NotificationControlButtonsView";
+namespace {
+constexpr SkColor kCloseButtonIconColor = SkColorSetRGB(0x4c, 0x36, 0xd2);
+}  // namespace
 
 NotificationControlButtonsView::NotificationControlButtonsView(
-    NotificationView* message_view)
-    : message_view_(message_view) {
-  DCHECK(message_view);
-  SetLayoutManager(std::make_unique<views::BoxLayout>(
-      views::BoxLayout::Orientation::kHorizontal));
+    NotificationView* notification_view)
+    : notification_view_(notification_view) {
+  DCHECK(notification_view_);
 
-  // Use layer to change the opacity.
+  views::BoxLayout* layout_manager =
+      SetLayoutManager(std::make_unique<views::BoxLayout>(
+          views::BoxLayout::Orientation::kHorizontal));
+
+  layout_manager->set_cross_axis_alignment(
+      views::BoxLayout::CrossAxisAlignment::kStart);
+
+  // Use layer to change the opacity
   SetPaintToLayer();
   layer()->SetFillsBoundsOpaquely(false);
-
-  SetBackground(views::CreateSolidBackground(kControlButtonBackgroundColor));
 }
 
 NotificationControlButtonsView::~NotificationControlButtonsView() = default;
 
-void NotificationControlButtonsView::ShowInfoButton(bool show) {
-  if (show && !info_button_) {
-    // Add the button next right to the snooze button.
-    // TODO(Albert Wang): https://github.com/brave/brave-browser/issues/11798
-    info_button_ = std::make_unique<PaddedImage>();
-    info_button_->set_owned_by_client();
-    info_button_->SetImage(
-        gfx::CreateVectorIcon(kBraveAdsInfoIcon, 35, SK_ColorTRANSPARENT));
-    AddChildView(info_button_.get());
+void NotificationControlButtonsView::ShowInfoButton(const bool should_show) {
+  if (should_show && !info_button_) {
+    info_button_ = AddChildView(std::make_unique<PaddedImageView>());
+
+    gfx::ImageSkia image_skia =
+        gfx::CreateVectorIcon(kBraveAdsInfoIcon, SK_ColorTRANSPARENT);
+
+    info_button_->SetImage(image_skia);
+
+    info_button_->SetBackground(
+        views::CreateSolidBackground(SK_ColorTRANSPARENT));
+
     Layout();
-  } else if (!show && info_button_) {
-    DCHECK(Contains(info_button_.get()));
-    info_button_.reset();
+  } else if (!should_show && info_button_) {
+    DCHECK(Contains(info_button_));
+    RemoveChildViewT(info_button_);
+    info_button_ = nullptr;
   }
 }
 
-void NotificationControlButtonsView::ShowCloseButton(bool show) {
-  if (show && !close_button_) {
-    close_button_ = std::make_unique<PaddedButton>(
+void NotificationControlButtonsView::ShowCloseButton(const bool should_show) {
+  if (should_show && !close_button_) {
+    close_button_ = AddChildView(std::make_unique<PaddedImageButton>(
         base::BindRepeating(&NotificationView::OnCloseButtonPressed,
-                            base::Unretained(message_view_)));
-    close_button_->set_owned_by_client();
+                            base::Unretained(notification_view_))));
+
     close_button_->SetImage(
         views::Button::STATE_NORMAL,
-        gfx::CreateVectorIcon(kBraveAdsCloseButtonIcon, 18,
-                              kBraveAdsCloseButtonIconColor));
+        gfx::CreateVectorIcon(kBraveAdsCloseButtonIcon, kCloseButtonIconColor));
 
-    // Add the button at the last.
-    AddChildView(close_button_.get());
+    close_button_->SetBackground(
+        views::CreateSolidBackground(SK_ColorTRANSPARENT));
+
     Layout();
-  } else if (!show && close_button_) {
-    DCHECK(Contains(close_button_.get()));
-    close_button_.reset();
+  } else if (!should_show && close_button_) {
+    DCHECK(Contains(close_button_));
+    RemoveChildViewT(close_button_);
+    close_button_ = nullptr;
   }
 }
 
-void NotificationControlButtonsView::ShowButtons(bool show) {
+void NotificationControlButtonsView::ShowButtons(const bool should_show) {
   DCHECK(layer());
+
   // Manipulate the opacity instead of changing the visibility to keep the tab
-  // order even when the view is invisible.
-  layer()->SetOpacity(show ? 1. : 0.);
-  SetCanProcessEventsWithinSubtree(show);
+  // order even when the view is invisible
+  layer()->SetOpacity(should_show ? 1.0 : 0.0);
+
+  SetCanProcessEventsWithinSubtree(should_show);
 }
 
-bool NotificationControlButtonsView::IsAnyButtonFocused() const {
-  return (close_button_ && close_button_->HasFocus());
-}
-
-views::Button* NotificationControlButtonsView::close_button() const {
-  return close_button_.get();
-}
-
-views::ImageView* NotificationControlButtonsView::info_button() const {
-  return info_button_.get();
-}
-
-const char* NotificationControlButtonsView::GetClassName() const {
-  return kViewClassName;
-}
+BEGIN_METADATA(NotificationControlButtonsView, views::View)
+END_METADATA
 
 }  // namespace brave_ads

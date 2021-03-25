@@ -55,7 +55,7 @@ void AdsNotificationHandler::OnClose(Profile* profile,
     return;
   }
 
-  ads_service_->OnClose(profile, origin, id, by_user,
+  ads_service_->OnClose(profile, id, by_user,
                         std::move(completed_closure_local));
 }
 

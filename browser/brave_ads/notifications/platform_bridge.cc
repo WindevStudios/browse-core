@@ -17,7 +17,7 @@
 #include "brave/components/brave_ads/browser/ads_service.h"
 #include "brave/components/brave_ads/browser/ads_service_factory.h"
 #include "brave/components/brave_ads/browser/ads_service_impl.h"
-#include "brave/ui/brave_ads/message_popup_view.h"
+#include "brave/ui/brave_ads/notification_popup.h"
 #include "brave/ui/brave_ads/public/cpp/notification.h"
 
 #if defined(OS_ANDROID)
@@ -42,25 +42,28 @@ class PassThroughDelegate : public brave_ads::NotificationDelegate {
                       const brave_ads::Notification& notification)
       : profile_(profile), notification_(notification) {}
 
-  void Close(bool by_user) override {
+  void OnClose(const bool by_user) override {
     std::unique_ptr<brave_ads::AdsNotificationHandler> handler =
         std::make_unique<brave_ads::AdsNotificationHandler>(
             static_cast<content::BrowserContext*>(profile_));
+
     handler->SetAdsService(static_cast<brave_ads::AdsServiceImpl*>(
         brave_ads::AdsServiceFactory::GetForProfile(profile_)));
-    handler->OnClose(profile_, notification_.origin_url(), notification_.id(),
-                     by_user, base::OnceClosure());
+
+    handler->OnClose(profile_, GURL(), notification_.id(), by_user,
+                     base::OnceClosure());
   }
 
-  void Click(const base::Optional<int>& button_index,
-             const base::Optional<base::string16>& reply) override {
+  void OnClick() override {
     std::unique_ptr<brave_ads::AdsNotificationHandler> handler =
         std::make_unique<brave_ads::AdsNotificationHandler>(
             static_cast<content::BrowserContext*>(profile_));
+
     handler->SetAdsService(static_cast<brave_ads::AdsServiceImpl*>(
         brave_ads::AdsServiceFactory::GetForProfile(profile_)));
-    handler->OnClick(profile_, notification_.origin_url(), notification_.id(),
-                     button_index, reply, base::OnceClosure());
+
+    handler->OnClick(profile_, GURL(), notification_.id(), base::nullopt,
+                     base::nullopt, base::OnceClosure());
   }
 
  protected:
@@ -77,7 +80,7 @@ class PassThroughDelegate : public brave_ads::NotificationDelegate {
 
 PlatformBridge::PlatformBridge(Profile* profile) : profile_(profile) {}
 
-PlatformBridge::~PlatformBridge() {}
+PlatformBridge::~PlatformBridge() = default;
 
 void PlatformBridge::Display(
     Profile* profile,
@@ -90,7 +93,7 @@ void PlatformBridge::Display(
       base::WrapRefCounted(new PassThroughDelegate(profile_, *notification)));
 
 #if defined(OS_WIN) || defined(OS_MAC) || defined(OS_LINUX)
-  brave_ads::MessagePopupView::Show(*notification);
+  brave_ads::NotificationPopup::Show(*notification);
 #elif defined(OS_ANDROID)
   ShowAndroidAdsNotification(profile, notification);
 #endif
@@ -98,8 +101,10 @@ void PlatformBridge::Display(
   std::unique_ptr<brave_ads::AdsNotificationHandler> handler =
       std::make_unique<brave_ads::AdsNotificationHandler>(
           static_cast<content::BrowserContext*>(profile));
+
   handler->SetAdsService(static_cast<brave_ads::AdsServiceImpl*>(
       brave_ads::AdsServiceFactory::GetForProfile(profile_)));
+
   handler->OnShow(profile_, notification->id());
 }
 
@@ -139,7 +144,7 @@ void PlatformBridge::CloseAndroidAdsNotification(
 void PlatformBridge::Close(Profile* profile,
                            const std::string& notification_id) {
 #if defined(OS_WIN) || defined(OS_MAC) || defined(OS_LINUX)
-  brave_ads::MessagePopupView::ClosePopup(false);
+  brave_ads::NotificationPopup::Close(notification_id, false);
 #elif defined(OS_ANDROID)
   PlatformBridge::CloseAndroidAdsNotification(profile, notification_id);
 #endif

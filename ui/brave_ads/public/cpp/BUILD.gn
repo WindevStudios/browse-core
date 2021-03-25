@@ -3,7 +3,7 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this file,
 # You can obtain one at http://mozilla.org/MPL/2.0/.
 
-# C++ headers and sources that can be used outside brave_ads.
+# C++ headers and sources that can be used outside brave_ads
 component("cpp") {
   output_name = "brave_ui_brave_ads_cpp"
 
@@ -12,17 +12,10 @@ component("cpp") {
     "constants.h",
     "notification.cc",
     "notification.h",
-    "notification_delegate.cc",
     "notification_delegate.h",
   ]
 
   defines = [ "BRAVE_ADS_UI_PUBLIC_IMPLEMENTATION" ]
 
-  deps = [
-    "//base",
-    "//skia",
-    "//ui/gfx",
-    "//ui/strings",
-    "//url",
-  ]
+  deps = [ "//base" ]
 }

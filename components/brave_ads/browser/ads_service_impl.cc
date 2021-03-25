@@ -65,7 +65,7 @@
 #include "chrome/browser/profiles/profile_manager.h"
 #include "chrome/common/chrome_paths.h"
 #if !defined(OS_ANDROID)
-#include "brave/ui/brave_ads/message_popup_view.h"
+#include "brave/ui/brave_ads/notification_popup.h"
 #include "chrome/browser/fullscreen.h"
 #include "chrome/browser/ui/browser.h"
 #include "chrome/browser/ui/browser_finder.h"
@@ -968,7 +968,6 @@ void AdsServiceImpl::OnShow(Profile* profile, const std::string& uuid) {
 }
 
 void AdsServiceImpl::OnClose(Profile* profile,
-                             const GURL& origin,
                              const std::string& uuid,
                              const bool by_user,
                              base::OnceClosure completed_closure) {
@@ -1752,24 +1751,24 @@ std::string AdsServiceImpl::LoadDataResourceAndDecompressIfNeeded(
   return data_resource;
 }
 
-// Custom Notifications and Message Center notifications use 2 different
-// types of notification.h
-void AdsServiceImpl::ShowNotification(
-    const ads::AdNotificationInfo& ad_notification) {
+void AdsServiceImpl::ShowNotification(const ads::AdNotificationInfo& info) {
   if (brave::IsNightlyOrDeveloperBuild()) {
-    auto notification = CreateAdNotification(ad_notification);
+    std::unique_ptr<Notification> notification =
+        CreateCustomAdNotification(info);
 
     std::unique_ptr<PlatformBridge> platform_bridge =
         std::make_unique<PlatformBridge>(profile_);
 
     platform_bridge->Display(profile_, notification);
   } else {
-    auto notification = CreateMessageCenterNotification(ad_notification);
+    std::unique_ptr<message_center::Notification> notification =
+        CreateAdNotification(info);
+
     display_service_->Display(NotificationHandler::Type::BRAVE_ADS,
                               *notification, /*metadata=*/nullptr);
   }
 
-  StartNotificationTimeoutTimer(ad_notification.uuid);
+  StartNotificationTimeoutTimer(info.uuid);
 }
 
 void AdsServiceImpl::StartNotificationTimeoutTimer(const std::string& uuid) {

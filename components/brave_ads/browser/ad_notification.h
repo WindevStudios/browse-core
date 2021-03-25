@@ -8,10 +8,6 @@
 
 #include <memory>
 
-#include "base/compiler_specific.h"
-#include "base/macros.h"
-#include "build/build_config.h"
-
 namespace message_center {
 class Notification;
 }
@@ -24,13 +20,12 @@ namespace brave_ads {
 
 class Notification;
 
-// On Android, this URL must represent an HTTP or HTTPS web origin.
-const char* const kBraveAdsUrlPrefix = "https://www.brave.com/ads/?";
+const char kAdNotificationUrlPrefix[] = "https://www.brave.com/ads/?";
 
-std::unique_ptr<Notification> CreateAdNotification(
+std::unique_ptr<message_center::Notification> CreateAdNotification(
     const ads::AdNotificationInfo& info);
 
-std::unique_ptr<message_center::Notification> CreateMessageCenterNotification(
+std::unique_ptr<Notification> CreateCustomAdNotification(
     const ads::AdNotificationInfo& info);
 
 }  // namespace brave_ads

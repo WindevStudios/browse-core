@@ -6,18 +6,8 @@
 #ifndef BRAVE_UI_BRAVE_ADS_NOTIFICATION_CONTROL_BUTTONS_VIEW_H_
 #define BRAVE_UI_BRAVE_ADS_NOTIFICATION_CONTROL_BUTTONS_VIEW_H_
 
-#include <memory>
-
-#include "base/macros.h"
-#include "third_party/skia/include/core/SkColor.h"
-#include "ui/views/controls/button/button.h"
-#include "ui/views/controls/button/image_button.h"
-#include "ui/views/controls/image_view.h"
+#include "ui/views/metadata/metadata_header_macros.h"
 #include "ui/views/view.h"
-
-namespace ui {
-class Event;
-}
 
 namespace views {
 class Button;
@@ -26,42 +16,38 @@ class Button;
 namespace brave_ads {
 
 class NotificationView;
-class PaddedImage;
-class PaddedButton;
+class PaddedImageButton;
+class PaddedImageView;
 
 class NotificationControlButtonsView : public views::View {
  public:
-  // String to be returned by GetClassName() method.
-  static const char kViewClassName[];
+  METADATA_HEADER(NotificationControlButtonsView);
 
   explicit NotificationControlButtonsView(NotificationView* message_view);
   ~NotificationControlButtonsView() override;
 
-  // Change the visibility of the close button. True to show, false to hide.
-  void ShowCloseButton(bool show);
+  // Change the visibility of the info button. Set |should_show| to true to
+  // show, false to hide
+  void ShowInfoButton(const bool should_show);
 
-  void ShowInfoButton(bool show);
-  // Change the visibility of all buttons. True to show, false to hide.
-  void ShowButtons(bool show);
+  // Change the visibility of the close button. Set |should_show| to true to
+  // show, false to hide
+  void ShowCloseButton(const bool should_show);
 
-  // Return the focus status of any button. True if the focus is on any button,
-  // false otherwise.
-  bool IsAnyButtonFocused() const;
-
-  // Methods for retrieving the control buttons directly.
-  views::Button* close_button() const;
-  views::ImageView* info_button() const;
-
-  // views::View
-  const char* GetClassName() const override;
+  // Change the visibility of all buttons. Set |should_show| to true to show,
+  // false to hide
+  void ShowButtons(const bool should_show);
 
  private:
-  NotificationView* message_view_;
+  NotificationView* notification_view_ = nullptr;
 
-  std::unique_ptr<PaddedButton> close_button_;
-  std::unique_ptr<PaddedImage> info_button_;
+  PaddedImageView* info_button_ = nullptr;
+  PaddedImageButton* close_button_ = nullptr;
 
-  DISALLOW_COPY_AND_ASSIGN(NotificationControlButtonsView);
+  NotificationControlButtonsView(const NotificationControlButtonsView&) =
+      delete;
+  NotificationControlButtonsView& operator=(
+      const NotificationControlButtonsView&) = delete;
 };
 
 }  // namespace brave_ads

@@ -210,7 +210,6 @@ class AdsServiceImpl : public AdsService,
 
   void OnShow(Profile* profile, const std::string& uuid);
   void OnClose(Profile* profile,
-               const GURL& origin,
                const std::string& uuid,
                const bool by_user,
                base::OnceClosure completed_closure);
@@ -321,8 +320,7 @@ class AdsServiceImpl : public AdsService,
 
   bool CanShowBackgroundNotifications() const override;
 
-  void ShowNotification(
-      const ads::AdNotificationInfo& ad_notification) override;
+  void ShowNotification(const ads::AdNotificationInfo& info) override;
 
   void CloseNotification(const std::string& uuid) override;
 
