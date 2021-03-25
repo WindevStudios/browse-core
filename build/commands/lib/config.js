@@ -479,10 +479,6 @@ Config.prototype.getCachePath = function () {
   return this.git_cache_path || process.env.GIT_CACHE_PATH
 }
 
-Config.prototype.getGomaServerHost = function () {
-  return this.gomaServerHost || process.env.GOMA_SERVER_HOST
-}
-
 Config.prototype.update = function (options) {
   if (options.universal) {
     this.targetArch = 'arm64'
@@ -695,7 +691,7 @@ Object.defineProperty(Config.prototype, 'defaultOptions', {
 
     if (this.useGoma()) {
       env.CC_WRAPPER = path.join(this.depotToolsDir, '.cipd_bin', 'gomacc');
-      env.GOMA_SERVER_HOST = this.getGomaServerHost()
+      env.GOMA_SERVER_HOST = this.gomaServerHost
       console.log('using goma')
     }
 
