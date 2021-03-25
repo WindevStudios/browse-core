@@ -38,6 +38,8 @@
 #include "services/network/public/mojom/url_response_head.mojom.h"
 #include "ui/base/idle/idle.h"
 
+#include "base/task/cancelable_task_tracker.h"
+
 using brave_rewards::RewardsNotificationService;
 using brave_user_model::UserModelFileService;
 
@@ -338,6 +340,13 @@ class AdsServiceImpl : public AdsService,
   void LoadUserModelForId(const std::string& id,
                           ads::LoadCallback callback) override;
 
+  void GetBrowsingHistory(const int max_count,
+                          const int days_ago,
+                          ads::GetBrowsingHistoryCallback callback) override;
+
+  void OnBrowsingHistorySearchComplete(ads::GetBrowsingHistoryCallback callback,
+                                       history::QueryResults results);
+
   std::string LoadResourceForId(const std::string& id) override;
 
   void RunDBTransaction(ads::DBTransactionPtr transaction,
@@ -427,6 +436,9 @@ class AdsServiceImpl : public AdsService,
       bat_ads_client_receiver_;
   mojo::AssociatedRemote<bat_ads::mojom::BatAds> bat_ads_;
   mojo::Remote<bat_ads::mojom::BatAdsService> bat_ads_service_;
+
+  // The task tracker for the HistoryService callbacks.
+  base::CancelableTaskTracker task_tracker_;
 };
 
 }  // namespace brave_ads

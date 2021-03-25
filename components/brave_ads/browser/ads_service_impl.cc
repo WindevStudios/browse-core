@@ -5,6 +5,7 @@
 
 #include "brave/components/brave_ads/browser/ads_service_impl.h"
 
+#include <algorithm>
 #include <limits>
 #include <utility>
 
@@ -87,6 +88,9 @@
 #include "ui/base/l10n/l10n_util.h"
 #include "ui/base/resource/resource_bundle.h"
 #include "ui/message_center/public/cpp/notification.h"
+
+#include "chrome/browser/history/history_service_factory.h"
+#include "components/history/core/browser/history_service.h"
 
 #if defined(OS_ANDROID)
 #include "brave/browser/notifications/brave_notification_platform_bridge_helper_android.h"
@@ -1899,6 +1903,44 @@ void AdsServiceImpl::LoadUserModelForId(const std::string& id,
       base::BindOnce(&LoadOnFileTaskRunner, path.value()),
       base::BindOnce(&AdsServiceImpl::OnLoaded, AsWeakPtr(),
                      std::move(callback)));
+}
+
+void AdsServiceImpl::GetBrowsingHistory(
+    const int max_count,
+    const int days_ago,
+    ads::GetBrowsingHistoryCallback callback) {
+  history::HistoryService* history_service =
+      HistoryServiceFactory::GetForProfile(profile_,
+                                           ServiceAccessType::EXPLICIT_ACCESS);
+
+  base::string16 search_text;
+  history::QueryOptions options;
+  options.SetRecentDayRange(days_ago);
+  options.max_count = max_count;
+  options.duplicate_policy = history::QueryOptions::REMOVE_ALL_DUPLICATES;
+  history_service->QueryHistory(
+      search_text, options,
+      base::BindOnce(&AdsServiceImpl::OnBrowsingHistorySearchComplete,
+                     AsWeakPtr(), std::move(callback)),
+      &task_tracker_);
+}
+
+void AdsServiceImpl::OnBrowsingHistorySearchComplete(
+    ads::GetBrowsingHistoryCallback callback,
+    history::QueryResults results) {
+  if (!connected()) {
+    return;
+  }
+
+  std::vector<std::string> history;
+  for (const auto& result : results) {
+    history.push_back(result.url().GetWithEmptyPath().spec());
+  }
+
+  std::sort(history.begin(), history.end());
+  history.erase(std::unique(history.begin(), history.end()), history.end());
+
+  callback(history);
 }
 
 void AdsServiceImpl::RecordP2AEvent(const std::string& name,

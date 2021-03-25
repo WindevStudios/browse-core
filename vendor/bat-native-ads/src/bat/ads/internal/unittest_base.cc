@@ -129,6 +129,7 @@ void UnitTestBase::Initialize() {
   MockLoad(ads_client_mock_);
   MockLoadUserModelForId(ads_client_mock_);
   MockLoadResourceForId(ads_client_mock_);
+  // MockGetBrowsingHistory(ads_client_mock_);
   MockSave(ads_client_mock_);
 
   MockPrefs(ads_client_mock_);
