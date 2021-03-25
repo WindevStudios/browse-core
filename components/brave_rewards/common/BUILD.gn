@@ -1,5 +1,7 @@
 source_set("common") {
   sources = [
+    "constants.cc",
+    "constants.h",
     "pref_names.cc",
     "pref_names.h",
     "url_constants.cc",
