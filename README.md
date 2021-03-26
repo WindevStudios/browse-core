@@ -1,14 +1,14 @@
-# Brave Core
+# Browse Core
 
-Brave Core is a set of changes, APIs, and scripts used for customizing Chromium to make Brave.
+Browse Core is a set of changes, APIs, and scripts used for customizing Brave to make Browse.
 
-Follow [@brave](https://twitter.com/brave) on Twitter for important announcements.
+Follow [@windev_tweets](https://twitter.com/windev_tweets) on Twitter for important announcements.
 
 ## Resources
 
-- [Issues](https://github.com/brave/brave-browser/issues)
-- [Releases](https://github.com/brave/brave-browser/releases)
-- [Documentation wiki](https://github.com/brave/brave-browser/wiki)
+- [Issues](https://github.com/windevstudios/braveplustwo/issues)
+- [Releases](https://github.com/windevstudios/braveplustwo/releases)
+- [Documentation wiki](https://github.com/windevstudios/braveplustwo/wiki)
 
 ## Community
 
